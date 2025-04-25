@@ -1,3 +1,4 @@
+from datetime import datetime
 import streamlit as st
 import requests
 import os
@@ -406,7 +407,7 @@ if st.button("Obtener Anexos y Links"):
                         st.download_button(
                             label=f"Descargar {processed_count} Archivos (ZIP)",
                             data=zip_buffer,
-                            file_name=f"sugos_export_{'_'.join(cedulas_list)}.zip",
+                            file_name=f"sugos_export_{ datetime.now().strftime("%Y%m%d_%H%M%S")}.zip",
                             mime="application/zip"
                         )
                     else:
