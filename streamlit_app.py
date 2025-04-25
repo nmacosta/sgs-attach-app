@@ -278,14 +278,13 @@ def process_link_item(token, link_info, zip_file_handle, base_zip_path):
 # --- Interfaz de Streamlit ---
 
 st.set_page_config(page_title="Descarga Anexos y Links PDF SUGOS", layout="wide")
-st.title("Descargador CRM SUGOS v8.1 (iframe+seq_names - Corregido)")
+st.title("CRM SUGOS Downloader v0.0.1")
 st.markdown("""
 Ingrese cédulas. Se descargarán anexos y links asociados.
 - **Anexos**: Archivos originales.
 - **Links**:
     - Si la URL es **PDF**, se guarda directamente.
-    - Si es **HTML**, se busca `<iframe>`, se descarga su contenido y se convierte a **PDF**.
-    - Se usan fallbacks (HTML, binario) si es necesario.
+    - Si es **HTML**, se busca `<iframe>`, se descarga su contenido y se convierte a **PDF**.    
 - **Nomenclatura**: Archivos se nombran `CEDULA/CEDULA-SECUENCIA.extension`.
 - **Estructura**: ZIP con **carpetas por cédula**.
 """)
@@ -435,4 +434,4 @@ if st.button("Obtener Anexos y Links"):
                 st.error("Fallo en la autenticación.")
 # --- Pie de página ---
 st.markdown("---")
-st.caption("CRM SUGOS Downloader v8.1 (iframe+seq_names - Corregido)")
+st.caption("CRM SUGOS Downloader v0.0.1")
