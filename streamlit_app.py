@@ -1,3 +1,4 @@
+import datetime
 import streamlit as st
 import requests
 import os
@@ -403,12 +404,16 @@ if st.button("Obtener Anexos y Links"):
                         st.success(f"¡Éxito! Se procesaron {processed_count} elementos correctamente.")
                         if error_count > 0:
                             st.warning(f"Hubo errores procesando {error_count} elementos.")
+
+
+                        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                        # Usar timestamp en el nombre del archivo
+                        zip_filename = f"sugos_export_{timestamp}.zip"
+
                         st.download_button(
                             label=f"Descargar {processed_count} Archivos (ZIP)",
                             data=zip_buffer,
-                            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                            # Usar timestamp en el nombre del archivo
-                            zip_filename = f"sugos_export_{timestamp}.zip"
+                            file_name=zip_filename,
                             mime="application/zip"
                         )
                     else:
