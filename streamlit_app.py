@@ -1,4 +1,3 @@
-# ... (Importaciones iguales a v10.5/v10.6) ...
 import streamlit as st
 import requests
 import os
@@ -14,9 +13,9 @@ from bs4 import BeautifulSoup
 # (Sin cambios)
 
 # --- Funciones de Ayuda ---
-# ... (Todas las funciones auxiliares: get_api_token, get_orders_for_cedula,
+# ... (Todas las funciones auxiliares sin cambios: get_api_token, get_orders_for_cedula,
 #      get_order_details_and_attachments, sanitize_filename, download_file_to_zip,
-#      process_link_item permanecen IGUALES que en la v10.5) ...
+#      process_link_item) ...
 def get_api_token(api_username, api_password, config):
     api_base_url = config.get('api_base_url');
     if not api_base_url: st.error("Error: 'api_base_url' no definida en config."); return None
@@ -148,19 +147,20 @@ def process_link_item(token, link_info, zip_file_handle, base_zip_path, config):
 
 # --- Interfaz de Streamlit ---
 
-st.set_page_config(page_title="SUGOS Downloader", layout="wide")
-st.title("CRM SUGOS Downloader v0.0.2") # <-- v10.9
+st.set_page_config(page_title="Descarga Anexos y Links PDF SUGOS", layout="wide")
+st.title("Descargador CRM SUGOS v10.10 (Limpieza Passwd)") # <-- v10.10
 st.markdown("""
 **Seleccione Entorno/Cliente**, ingrese **credenciales API**.
 - **Anexos**: Archivos originales.
-- **Links**: Se intenta obtener un **PDF** (directo, o convirtiendo HTML/iframe). Pueden generarse fallbacks `.html`.
+- **Links**: Se intenta obtener un **PDF** (directo, o convirtiendo HTML/iframe).
 - **Estructura**: Todo en un ZIP con **carpetas por cédula**.
 """)
 
-# --- Inicializar Estado si no existe ---
-# 'cedulas' se inicializa automáticamente por el widget
+# --- Inicializar Flags de Limpieza ---
 if 'run_processed' not in st.session_state:
-    st.session_state.run_processed = False # Flag para saber si el procesamiento anterior terminó
+    st.session_state.run_processed = False
+if 'clear_password_input' not in st.session_state:
+    st.session_state.clear_password_input = False
 
 # --- Cargar Configuraciones de Entorno ---
 selected_config = None
@@ -183,47 +183,64 @@ except AttributeError: st.sidebar.error("Error: Fallo al acceder a st.secrets.")
 except Exception as e: st.sidebar.error(f"Error crítico cargando config: {e}"); st.stop()
 
 # --- Inputs para Credenciales ---
-st.sidebar.header("Credenciales API"); default_user = st.secrets.get("api_credentials", {}).get("username", ""); default_pass = st.secrets.get("api_credentials", {}).get("password", "")
+st.sidebar.header("Credenciales API")
+default_user = st.secrets.get("api_credentials", {}).get("username", "")
+default_pass = st.secrets.get("api_credentials", {}).get("password", "")
 input_api_username = st.sidebar.text_input("Usuario API", value=default_user, key="api_user")
-input_api_password = st.sidebar.text_input("Contraseña API", value=default_pass, type="password", key="api_pass")
+
+# >>> LIMPIAR CONTRASEÑA SI FLAG ESTÁ ACTIVO <<<
+if st.session_state.clear_password_input:
+    st.session_state.api_pass = "" # Limpiar valor en estado
+    st.session_state.clear_password_input = False # Resetear flag
+
+# Renderizar input de contraseña (leerá de st.session_state.api_pass)
+input_api_password = st.sidebar.text_input(
+    "Contraseña API", value=default_pass, type="password", key="api_pass"
+)
 st.sidebar.caption("Credenciales para el entorno seleccionado.")
 
-# --- Entrada de Cédulas ---
-# >>> LIMPIAR SI LA EJECUCIÓN ANTERIOR TERMINÓ <<<
-if st.session_state.run_processed:
-    st.session_state.cedulas = "" # Limpiar valor
-    st.session_state.run_processed = False # Resetear flag para la próxima ejecución
 
-cedulas_input_value = st.text_area(
+# --- Entrada de Cédulas ---
+# >>> LIMPIAR CÉDULAS SI FLAG ESTÁ ACTIVO <<<
+if st.session_state.run_processed:
+    st.session_state.cedulas = ""
+    st.session_state.run_processed = False
+
+# Renderizar text_area de cédulas
+cedulas_input = st.text_area(
     "Cédulas (separadas por coma):", height=100,
     placeholder="Ej: 13465979, 87654321, 13465979", key="cedulas"
 )
 
-
-# --- Función Callback para el Botón ---
+# --- Función Callback para el Botón (opcional, sin cambios por ahora) ---
 def handle_submit():
-    # Este callback se ejecuta ANTES que el resto del script en el rerun
-    # por ahora no necesitamos hacer nada especial aquí, pero lo dejamos
-    # como estructura por si se necesita más adelante
-    # Podríamos resetear flags aquí si fuera complejo, pero no parece necesario aún
     pass
 
-# --- Botón de Acción con Callback ---
+# --- Botón de Acción ---
 process_button_pressed = st.button(
     "Obtener Anexos y Links",
     key="submit_button",
-    on_click=handle_submit # Asociar el callback
+    on_click=handle_submit
 )
 
 if process_button_pressed:
-    # Esta parte se ejecuta DESPUÉS del callback handle_submit en el rerun
-
     # Validar entradas...
     if not selected_config: st.error("Error crítico: No config seleccionada."); st.stop()
-    if not input_api_username or not input_api_password: st.warning("⚠️ Ingrese Usuario y Contraseña API."); st.stop()
-    # Leer del estado de sesión, que es la fuente de verdad para el widget
+    # Leer credenciales directamente de session_state ahora que los widgets están instanciados
+    current_api_user = st.session_state.api_user
+    current_api_pass = st.session_state.api_pass
+    if not current_api_user or not current_api_pass:
+        st.warning("⚠️ Ingrese Usuario y Contraseña API.")
+        # >>> ESTABLECER FLAG PARA LIMPIAR CONTRASEÑA EN EL PRÓXIMO RERUN <<<
+        st.session_state.clear_password_input = True
+        st.stop()
+
     cedulas_current_value = st.session_state.cedulas
-    if not cedulas_current_value: st.warning("⚠️ Ingrese al menos una cédula."); st.stop() # Usar el valor leído
+    if not cedulas_current_value: st.warning("⚠️ Ingrese al menos una cédula."); st.stop()
+
+    # >>> ESTABLECER FLAG PARA LIMPIAR CONTRASEÑA EN EL PRÓXIMO RERUN <<<
+    # Hacerlo aquí asegura que se limpie incluso si la autenticación falla
+    st.session_state.clear_password_input = True
 
     initial_cedulas_list = [c.strip() for c in cedulas_current_value.split(',') if c.strip()]
     if not initial_cedulas_list: st.warning("⚠️ No cédulas válidas tras procesar entrada."); st.stop()
@@ -235,7 +252,9 @@ if process_button_pressed:
     st.info(f"Iniciando para {len(unique_cedulas)} cédula(s) única(s): {', '.join(unique_cedulas)}")
     items_to_process = []; original_links_display = {}; file_sequence = {ced: 0 for ced in unique_cedulas}
 
-    with st.spinner("Autenticando..."): token = get_api_token(input_api_username, input_api_password, selected_config)
+    # Autenticar usando los valores actuales del estado
+    with st.spinner("Autenticando..."):
+        token = get_api_token(current_api_user, current_api_pass, selected_config)
 
     if token:
         # --- 1. Recopilación ---
@@ -300,18 +319,16 @@ if process_button_pressed:
                      file_name=zip_filename,
                      mime="application/zip"
                  )
-
-                 # >>> ESTABLECER FLAG PARA LIMPIAR EN LA PRÓXIMA EJECUCIÓN <<<
+                 # >>> Establecer flag para limpiar CÉDULAS en próximo rerun <<<
                  st.session_state.run_processed = True
-                 # No forzamos rerun, dejamos que Streamlit siga su flujo natural.
-                 # La limpieza ocurrirá la próxima vez que el script se ejecute desde arriba.
-
             else:
                 st.warning("No se pudo procesar exitosamente ningún elemento.")
-                st.session_state.run_processed = False # No limpiar si no hubo éxito
+                # No limpiar cédulas si no hubo éxito
+                st.session_state.run_processed = False
         else:
             st.info("No se encontró ningún anexo o link para procesar.")
-            st.session_state.run_processed = False # No limpiar si no hubo nada que procesar
+            # No limpiar cédulas si no hubo nada que procesar
+            st.session_state.run_processed = False
 
         # --- 4. Mostrar Links Originales ---
         # ... (sin cambios) ...
@@ -327,7 +344,11 @@ if process_button_pressed:
                               for link in od["links"]: st.markdown(f"- [{link['name']}]({link['url']})")
         if not links_found_flag: st.info("No se encontraron links asociados.")
     # else: # Fallo de token manejado
+    # >>> ESTABLECER FLAG PARA LIMPIAR CONTRASEÑA en próximo rerun (siempre después del intento) <<<
+        # Esto se ejecuta incluso si el token falla
+        st.session_state.clear_password_input = True
+
 
 # --- Pie de página ---
 st.markdown("---")
-st.caption("CRM SUGOS Downloader v0.0.2")
+st.caption("CRM SUGOS Downloader v10.10 (Limpieza Passwd)")
