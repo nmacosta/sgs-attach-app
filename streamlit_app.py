@@ -151,8 +151,10 @@ def process_link_item(token, link_info, zip_file_handle, base_zip_path, config):
 st.set_page_config(page_title="SUGOS Downloader", layout="wide")
 st.title("CRM SUGOS Downloader v0.0.2") # <-- v10.9
 st.markdown("""
-**Seleccione Entorno/Cliente**, ingrese **credenciales API** y **cédulas**.
-Las cédulas duplicadas se procesan una sola vez. El campo de cédulas se limpiará tras generar el ZIP.
+**Seleccione Entorno/Cliente**, ingrese **credenciales API**.
+- **Anexos**: Archivos originales.
+- **Links**: Se intenta obtener un **PDF** (directo, o convirtiendo HTML/iframe). Pueden generarse fallbacks `.html`.
+- **Estructura**: Todo en un ZIP con **carpetas por cédula**.
 """)
 
 # --- Inicializar Estado si no existe ---
