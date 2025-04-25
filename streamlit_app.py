@@ -147,8 +147,8 @@ def process_link_item(token, link_info, zip_file_handle, base_zip_path, config):
 
 # --- Interfaz de Streamlit ---
 
-st.set_page_config(page_title="Descarga Anexos y Links PDF SUGOS", layout="wide")
-st.title("Descargador CRM SUGOS v10.10 (Limpieza Passwd)") # <-- v10.10
+st.set_page_config(page_title="SUGOS Downloader", layout="wide")
+st.title("CRM SUGOS Downloader v0.0.2") # <-- v10.10
 st.markdown("""
 **Seleccione Entorno/Cliente**, ingrese **credenciales API**.
 - **Anexos**: Archivos originales.
@@ -351,4 +351,4 @@ if process_button_pressed:
 
 # --- Pie de página ---
 st.markdown("---")
-st.caption("CRM SUGOS Downloader v10.10 (Limpieza Passwd)")
+st.caption("CRM SUGOS Downloader v0.0.2")
