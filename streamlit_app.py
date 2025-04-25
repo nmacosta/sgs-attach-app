@@ -195,14 +195,14 @@ def process_link_item(token, link_info, zip_file_handle, base_zip_path):
 
         # 2. Verificar si es PDF directamente
         if 'application/pdf' in content_type:
-            st.write(f"  -> Link '{link_name}' es PDF directo.")
+            #st.write(f"  -> Link '{link_name}' es PDF directo.")
             pdf_zip_path = base_zip_path + ".pdf"
             zip_file_handle.writestr(pdf_zip_path, response.content)
             return True
 
         # 3. Si es HTML, procesar para encontrar iframe
         elif 'text/html' in content_type:
-            st.write(f"  -> Link '{link_name}' es HTML. Buscando iframe...")
+            #st.write(f"  -> Link '{link_name}' es HTML. Buscando iframe...")
             html_content = response.content
             soup = BeautifulSoup(html_content, 'html.parser')
             iframe = soup.find('iframe')
@@ -210,7 +210,7 @@ def process_link_item(token, link_info, zip_file_handle, base_zip_path):
             if iframe and iframe.get('src'):
                 iframe_src = iframe['src']
                 iframe_url = urljoin(link_url, iframe_src) # Usa la URL base del link original
-                st.write(f"     -> Iframe encontrado. Descargando de: {iframe_url}")
+                #st.write(f"     -> Iframe encontrado. Descargando de: {iframe_url}")
                 try:
                     # 4. Descargar contenido del iframe
                     iframe_response = requests.get(iframe_url, headers=headers, timeout=120)
@@ -218,7 +218,7 @@ def process_link_item(token, link_info, zip_file_handle, base_zip_path):
                     iframe_content = iframe_response.content
 
                     # 5. Convertir contenido del iframe a PDF
-                    st.write(f"     -> Convirtiendo contenido iframe a PDF...")
+                    #st.write(f"     -> Convirtiendo contenido iframe a PDF...")
                     pdf_buffer = io.BytesIO()
                     iframe_content_bytes = iframe_content if isinstance(iframe_content, bytes) else iframe_content.encode('utf-8')
                     pisa_status = pisa.CreatePDF(io.BytesIO(iframe_content_bytes), dest=pdf_buffer, encoding='utf-8')
@@ -233,7 +233,7 @@ def process_link_item(token, link_info, zip_file_handle, base_zip_path):
                     pdf_buffer.seek(0)
                     pdf_zip_path = base_zip_path + ".pdf" # Usar el nombre base secuencial
                     zip_file_handle.writestr(pdf_zip_path, pdf_buffer.read())
-                    st.write(f"     -> PDF del iframe guardado.")
+                    #st.write(f"     -> PDF del iframe guardado.")
                     return True
                 except requests.exceptions.RequestException as e_iframe:
                     st.error(f"Error descargando iframe ({iframe_url}) para '{link_name}': {e_iframe}")
@@ -258,7 +258,7 @@ def process_link_item(token, link_info, zip_file_handle, base_zip_path):
                 pdf_buffer.seek(0)
                 pdf_zip_path = base_zip_path + ".pdf" # Usar el nombre base secuencial
                 zip_file_handle.writestr(pdf_zip_path, pdf_buffer.read())
-                st.write(f"     -> PDF del HTML principal guardado (fallback).")
+                #st.write(f"     -> PDF del HTML principal guardado (fallback).")
                 return True
         else:
             # 7. Tipo de contenido desconocido
